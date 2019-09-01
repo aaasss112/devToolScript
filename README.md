@@ -1,5 +1,8 @@
 # devToolScript
 日常开发脚本
+## before of all
+- `pip install -r requirement.txt`:项目根目录运行该命令，安装相关依赖
+
 ### [adb.py](./adb.py)
 - `python adb.py install xx.apk`：同时在多台已连接的设备上安装apk
 - `python adb.py path "com.duowan.mobile""`：根据指定包名查询并显示apk的安装路径
