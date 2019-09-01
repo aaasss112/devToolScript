@@ -1,46 +1,57 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+r""" A command line tool for ADB
 
+Command Usage:
+
+install:  
+    install local apk into multi devices at once.
+- python adb.py install xx.apk
+
+path:
+    Print the installation path of the specified package name, and pull to specified path
+- python adb.py path "com.duowan.mobile"
+- python adb.py path "com.duowan.mobile" ~/Desktop/  
+
+"""
 import subprocess
-import argparse
 import logging
 import re
 import sys
 import os
+import fire
 # import pdb
 
 LOGGING_FORMAT = '%(asctime)s [%(levelname)s]: %(message)s'
 logging.basicConfig(format=LOGGING_FORMAT, level=logging.DEBUG)
 
 
-def _multi_install(args):
-    r"""
-    同时在多台已连接的设备上安装apk
+def _multi_install(apk):
+    r""" install local apk into multi devices at once.  
 
-    >>> python adb.py -i xx.apk 
-    >>> python adb.py --install xx.apk
-
+    >>> python adb.py install xx.apk
     """
-    if not str(args.apk).endswith(".apk"):
+
+    if not str(apk).endswith(".apk"):
         logging.error("only support *.apk file")
         return
 
     try:
-        _adb_devices = ['adb', 'devices']
-        result = subprocess.check_output(_adb_devices).strip()
+        result = subprocess.check_output(['adb', 'devices']).strip()
         reg_result = re.findall(r'(\w+)\t+device', result)
         if reg_result:
             for device_id in reg_result:
                 logging.info(
-                    "installing apk: %s into device_id: %s ..." % (args.apk, device_id))
+                    "installing apk: %s into device_id: %s ..." % (apk, device_id))
                 try:
                     subprocess.check_call(
-                        ['adb', '-s', device_id, 'install', '-r', '-d', args.apk])
+                        ['adb', '-s', device_id, 'install', '-r', '-d', apk])
                     logging.info(
-                        "install success... apk : %s, device_id = %s" % (args.apk, device_id))
+                        "install success... apk : %s, device_id = %s" % (apk, device_id))
                 except:
+                    print
                     logging.error(
-                        "install failure... apk : %s, device_id = %s \n" % (args.apk, device_id))
+                        "install failure... apk : %s, device_id = %s \n" % (apk, device_id))
                     continue
         else:
             logging.error(
@@ -49,55 +60,36 @@ def _multi_install(args):
         logging.error(e)
 
 
-def _path(args):
+def _path(pkg_name, pull=None):
+    """Print the installation path of the specified package name, and pull to specified path.
+    
+    >>> python adb.py path "com.duowan.mobile"  
+    >>> python adb.py path "com.duowan.mobile" ~/Desktop/    
+    """
     try:
-        logging.info("The package name: %s" % args.pkgName)
+        logging.info("The package name: %s" % pkg_name)
         pkg_path = subprocess.check_output(
-            ['adb', 'shell', 'pm', 'path', args.pkgName])
+            ['adb', 'shell', 'pm', 'path', pkg_name])
         print pkg_path
-        if args.target_dir:
+        if isinstance(pull, str):
             try:
                 path_reg = re.findall(r'.*:(.*)', pkg_path)
                 if path_reg and path_reg[0]:
-                    logging.info("Being pull to : %s" % args.target_dir)
+                    logging.info("Being pull to : %s" % pull)
                     subprocess.check_call(
-                        ['adb', 'pull', path_reg[0], args.target_dir])
-                    os.rename(os.path.join(args.target_dir, "base.apk"),
-                              os.path.join(args.target_dir, "%s.apk" % args.pkgName))
+                        ['adb', 'pull', path_reg[0], pull])
+                    os.rename(os.path.join(pull, "base.apk"),
+                              os.path.join(pull, "%s.apk" % pkg_name))
                     print "\npull to %s success, the apk name is %s.apk" % (
-                        args.target_dir, args.pkgName)
+                        pull, pkg_name)
             except Exception as e:
                 logging.error("\npull failure...error = %s" % e)
     except:
         logging.error("\nno result, please check input package name!")
 
 
-def _arg_parse():
-    parser = argparse.ArgumentParser(
-        description='ADB Extensions: install, and so on.')
-    parser.add_argument('--install', '-i',  # 命令参数的名称
-                        dest="apk",  # 将命令行中，--install 的参数值赋值给变量apk，你可以用args.apk访问。
-                        metavar='[apk]',  # 用于更好的展示--help内容，不指定该值，默认使用dest的值
-                        # 展示提示信息，主要是该命令的作用
-                        help="Install local [apk] file into multi devices at once"
-                        )
-    parser.add_argument('--path',
-                        dest="pkgName",
-                        type=str,
-                        metavar='[pkgName]',
-                        help="Print the installation path of the specified package name")
-    parser.add_argument('--pull',
-                        dest="target_dir",
-                        metavar='[target_dir]',
-                        help="using after --path param,it will pull the apk to specified path")
-    return parser.parse_args()
-
-
-def _setup():
-    args = _arg_parse()
-    # _multi_install(args)
-    _path(args)
-
-
 if __name__ == "__main__":
-    _setup()
+    fire.Fire({
+        "install": _multi_install,
+        "path": _path
+    })
