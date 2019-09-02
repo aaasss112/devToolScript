@@ -1,2 +1,0 @@
-((ls))
-# printf $result

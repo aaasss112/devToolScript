@@ -1,8 +1,8 @@
 # devToolScript
 日常开发脚本
 ## before of all
-- 所有Python脚本基于`Python3`,且只支持`Python3`
-- `pip3 install -r requirement.txt`:项目根目录运行该命令，安装相关依赖
+1. 所有Python脚本基于`Python3`,且只支持`Python3`
+2. `./setup.sh`:项目根目录运行该命令，配置项目，安装相关依赖
 
 ### [adb.py](./adb.py)
 - `python3 adb.py install xx.apk`：同时在多台已连接的设备上安装apk
