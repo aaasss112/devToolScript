@@ -71,6 +71,8 @@ def _multi_install(apk):
                 logging.error(
                     "install failure... apk : %s, device = %s \n" % (apk, device))
                 continue
+    except NoDevicesConnectionException as e:
+        logging.error(e)
     except Exception as e:
         logging.error(e)
 
@@ -78,14 +80,13 @@ def _multi_install(apk):
 def _path(pkg_name, pull=None):
     """Print the installation path of the specified package name, and pull to specified path.
 
-    >>> python adb.py path "com.duowan.mobile"  
-    >>> python adb.py path "com.duowan.mobile" ~/Desktop/    
+    >>> python adb.py path "com.duowan.mobile"
+    >>> python adb.py path "com.duowan.mobile" ~/Desktop/
     """
-    devices = _get_connection_devices()
-    if len(devices) > 1:
-        logging.error('检测到多台设备连接，请确保只有一台设备连接后重试')
-        return
     try:
+        if len(_get_connection_devices()) > 1:
+            logging.error('检测到多台设备连接，请确保只有一台设备连接后重试')
+        return
         logging.info("The package name: %s" % pkg_name)
         pkg_path = subprocess.check_output(
             ['adb', 'shell', 'pm', 'path', pkg_name]).decode()
@@ -103,6 +104,8 @@ def _path(pkg_name, pull=None):
                         pull, pkg_name))
             except Exception as e:
                 logging.error("\npull failure...error = %s" % e)
+    except NoDevicesConnectionException as e:
+        logging.error(e)
     except:
         logging.error("\nno result, please check input package name!")
 
@@ -130,6 +133,8 @@ def _screen_shot(path):
                     ['adb', '-s', device, 'shell', 'rm', _screen_shot_name])
                 logging.info(
                     'screen shot was successful, output path is: %s' % os.path.join(path, "screen-shot-%s.png" % device))
+    except NoDevicesConnectionException as e:
+        logging.error(e)
     except:
         logging.error('screen shot has occur some error, please retry... ')
 
