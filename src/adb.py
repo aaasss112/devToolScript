@@ -20,6 +20,7 @@ import sys
 import os
 import fire
 # import pdb
+from constants import code as ErrorCode
 
 LOGGING_FORMAT = '%(asctime)s [%(levelname)s]: %(message)s'
 logging.basicConfig(format=LOGGING_FORMAT, level=logging.DEBUG)
@@ -54,7 +55,7 @@ def _multi_install(apk):
     """
     if not apk.endswith(".apk"):
         logging.error("only support *.apk file")
-        return
+        return ErrorCode.CODE_EXEC_FAILURE
 
     try:
         devices = _get_connection_devices()
@@ -71,10 +72,13 @@ def _multi_install(apk):
                 logging.error(
                     "install failure... apk : %s, device = %s \n" % (apk, device))
                 continue
+        return ErrorCode.CODE_EXEC_SUCCESS
     except NoDevicesConnectionException as e:
         logging.error(e)
+        return ErrorCode.CODE_NO_DEVICES_CONNECTION
     except Exception as e:
         logging.error(e)
+        return ErrorCode.CODE_EXEC_FAILURE
 
 
 def _path(pkg_name, pull=None):
@@ -86,7 +90,7 @@ def _path(pkg_name, pull=None):
     try:
         if len(_get_connection_devices()) > 1:
             logging.error('检测到多台设备连接，请确保只有一台设备连接后重试')
-        return
+            return ErrorCode.CODE_EXEC_FAILURE
         logging.info("The package name: %s" % pkg_name)
         pkg_path = subprocess.check_output(
             ['adb', 'shell', 'pm', 'path', pkg_name]).decode()
@@ -102,12 +106,17 @@ def _path(pkg_name, pull=None):
                               os.path.join(pull, "%s.apk" % pkg_name))
                     print("\npull to %s success, the apk name is %s.apk" % (
                         pull, pkg_name))
+                    return ErrorCode.CODE_EXEC_SUCCESS
             except Exception as e:
                 logging.error("\npull failure...error = %s" % e)
+                return ErrorCode.CODE_EXEC_FAILURE
+        return ErrorCode.CODE_EXEC_SUCCESS
     except NoDevicesConnectionException as e:
         logging.error(e)
+        return ErrorCode.CODE_NO_DEVICES_CONNECTION
     except:
         logging.error("\nno result, please check input package name!")
+        return ErrorCode.CODE_EXEC_FAILURE
 
 
 def _screen_shot(path):
@@ -117,26 +126,29 @@ def _screen_shot(path):
     """
     if not path:
         logging.error('path invalid, please check the path.')
-        return
+        return ErrorCode.CODE_EXEC_FAILURE
     try:
         devices = _get_connection_devices()
         if len(devices) > 1:
             logging.info('当前有多台已连接设备，会分别获取每台设备的实时屏幕截图，并以设备id命名')
-            for device in devices:
-                logging.info('start %s screen shot...' % device)
-                _screen_shot_name = '/sdcard/screen-shot-%s.png' % device
-                subprocess.check_call(
-                    ['adb', '-s', device, 'shell', 'screencap', '-p', _screen_shot_name])
-                subprocess.check_output(
-                    ['adb', '-s', device, 'pull', _screen_shot_name, path])
-                subprocess.check_call(
-                    ['adb', '-s', device, 'shell', 'rm', _screen_shot_name])
-                logging.info(
-                    'screen shot was successful, output path is: %s' % os.path.join(path, "screen-shot-%s.png" % device))
+        for device in devices:
+            logging.info('start %s screen shot...' % device)
+            _screen_shot_name = '/sdcard/screen-shot-%s.png' % device
+            subprocess.check_call(
+                ['adb', '-s', device, 'shell', 'screencap', '-p', _screen_shot_name])
+            subprocess.check_output(
+                ['adb', '-s', device, 'pull', _screen_shot_name, path])
+            subprocess.check_call(
+                ['adb', '-s', device, 'shell', 'rm', _screen_shot_name])
+            logging.info(
+                'screen shot was successful, output path is: %s' % os.path.join(path, "screen-shot-%s.png" % device))
+        return ErrorCode.CODE_EXEC_SUCCESS
     except NoDevicesConnectionException as e:
         logging.error(e)
+        return ErrorCode.CODE_NO_DEVICES_CONNECTION
     except:
         logging.error('screen shot has occur some error, please retry... ')
+        return ErrorCode.CODE_EXEC_FAILURE
 
 
 if __name__ == "__main__":
