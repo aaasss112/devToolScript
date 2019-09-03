@@ -22,7 +22,7 @@ class ADBTestCase(unittest.TestCase):
         unittest.TestCase.assertEqual(
             self, ErrorCode.CODE_EXEC_SUCCESS, adb._multi_install(APK_NAME))
 
-    def test02(self):
+    def test_install02(self):
         unittest.TestCase.assertEqual(
             self, ErrorCode.CODE_EXEC_FAILURE, adb._multi_install('xx.ap'))
 
