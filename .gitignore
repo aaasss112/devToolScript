@@ -2,3 +2,4 @@
 screen-shot*.png
 python.test.apk
 .vscode/
+.idea/
