@@ -16,18 +16,17 @@ path:
 import subprocess
 import logging
 import re
-import sys
 import os
 import fire
 # import pdb
-from constants import code as ErrorCode
+from .constants import code as ErrorCode
 
 LOGGING_FORMAT = '%(asctime)s [%(levelname)s]: %(message)s'
-logging.basicConfig(format=LOGGING_FORMAT, level=logging.DEBUG)
+logging.basicConfig(format = LOGGING_FORMAT, level = logging.DEBUG)
 
 
 class NoDevicesConnectionException(Exception):
-    def __init__(self, output='当前没有已连接的设备，请确保设备连接后重试'):
+    def __init__(self, output = '当前没有已连接的设备，请确保设备连接后重试'):
         self.output = output
 
     def __str__(self):
@@ -51,7 +50,7 @@ def _get_connection_devices():
 def _multi_install(apk):
     r""" install local apk into multi devices at once.
 
-    >>> python adb.py install xx.apk
+    python adb.py install xx.apk
     """
     if not apk.endswith(".apk"):
         logging.error("only support *.apk file")
@@ -61,16 +60,16 @@ def _multi_install(apk):
         devices = _get_connection_devices()
         for device in devices:
             logging.info(
-                "installing apk: %s into device: %s ..." % (apk, device))
+                    "installing apk: %s into device: %s ..." % (apk, device))
             try:
                 subprocess.check_output(
-                    ['adb', '-s', device, 'install', '-r', '-d', apk])
+                        ['adb', '-s', device, 'install', '-r', '-d', apk])
                 logging.info(
-                    "install success... apk : %s, device = %s" % (apk, device))
+                        "install success... apk : %s, device = %s" % (apk, device))
             except:
                 print
                 logging.error(
-                    "install failure... apk : %s, device = %s \n" % (apk, device))
+                        "install failure... apk : %s, device = %s \n" % (apk, device))
                 continue
         return ErrorCode.CODE_EXEC_SUCCESS
     except NoDevicesConnectionException as e:
@@ -81,11 +80,14 @@ def _multi_install(apk):
         return ErrorCode.CODE_EXEC_FAILURE
 
 
-def _path(pkg_name, pull=None):
+def _path(pkg_name, pull = None):
     """Print the installation path of the specified package name, and pull to specified path.
 
-    >>> python adb.py path "com.duowan.mobile"
-    >>> python adb.py path "com.duowan.mobile" ~/Desktop/
+    python adb.py path "com.duowan.mobile"
+    python adb.py path "com.duowan.mobile" ~/Desktop/
+
+    :parameter pkg_name apk包名
+    :parameter pull 远程路径
     """
     try:
         if len(_get_connection_devices()) > 1:
@@ -93,7 +95,7 @@ def _path(pkg_name, pull=None):
             return ErrorCode.CODE_EXEC_FAILURE
         logging.info("The package name: %s" % pkg_name)
         pkg_path = subprocess.check_output(
-            ['adb', 'shell', 'pm', 'path', pkg_name]).decode()
+                ['adb', 'shell', 'pm', 'path', pkg_name]).decode()
         print(pkg_path)
         if isinstance(pull, str):
             try:
@@ -101,7 +103,7 @@ def _path(pkg_name, pull=None):
                 if path_reg and path_reg[0]:
                     logging.info("Being pull to : %s" % pull)
                     subprocess.check_output(
-                        ['adb', 'pull', path_reg[0], pull])
+                            ['adb', 'pull', path_reg[0], pull])
                     os.rename(os.path.join(pull, "base.apk"),
                               os.path.join(pull, "%s.apk" % pkg_name))
                     print("\npull to %s success, the apk name is %s.apk" % (
@@ -122,7 +124,9 @@ def _path(pkg_name, pull=None):
 def _screen_shot(path):
     """ 获取连接设备的实时截图，多台设备连接时，会分别获取每台设备的截图
 
-    >>> python3 adb.py screencap ~/Desktop
+    python3 adb.py screencap ~/Desktop
+
+    :param path 截图导出的路径
     """
     if not path:
         logging.error('path invalid, please check the path.')
@@ -135,13 +139,14 @@ def _screen_shot(path):
             logging.info('start %s screen shot...' % device)
             _screen_shot_name = '/sdcard/screen-shot-%s.png' % device
             subprocess.check_call(
-                ['adb', '-s', device, 'shell', 'screencap', '-p', _screen_shot_name])
+                    ['adb', '-s', device, 'shell', 'screencap', '-p', _screen_shot_name])
             subprocess.check_output(
-                ['adb', '-s', device, 'pull', _screen_shot_name, path])
+                    ['adb', '-s', device, 'pull', _screen_shot_name, path])
             subprocess.check_call(
-                ['adb', '-s', device, 'shell', 'rm', _screen_shot_name])
+                    ['adb', '-s', device, 'shell', 'rm', _screen_shot_name])
             logging.info(
-                'screen shot was successful, output path is: %s' % os.path.join(path, "screen-shot-%s.png" % device))
+                    'screen shot was successful, output path is: %s' % os.path.join(path,
+                                                                                    "screen-shot-%s.png" % device))
         return ErrorCode.CODE_EXEC_SUCCESS
     except NoDevicesConnectionException as e:
         logging.error(e)
@@ -153,7 +158,7 @@ def _screen_shot(path):
 
 if __name__ == "__main__":
     fire.Fire({
-        "install": _multi_install,
-        "path": _path,
+        "install"  : _multi_install,
+        "path"     : _path,
         'screencap': _screen_shot
     })

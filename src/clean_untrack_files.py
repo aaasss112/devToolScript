@@ -5,7 +5,7 @@
 import subprocess
 import os
 
-exclude_dirs = ['']
+exclude_dirs = []
 
 os.chdir("/Users/renqiangqiang/AndroidWorkSpace/YY")
 dirs = subprocess.check_output(['ls']).strip().decode()  # type: str
@@ -16,5 +16,5 @@ for d in exclude_dirs:
 for d in dirs_arr:
     result = os.path.join('/Users/renqiangqiang/AndroidWorkSpace/YY', d)
     os.chdir(result)
-    subprocess.call(['git', 'clean', '-fd']) # 删除git中未跟踪的文件和文件夹
+    subprocess.call(['git', 'clean', '-fd'])  # 删除git中未跟踪的文件和文件夹
     # print(subprocess.check_output(['git', 'status']).strip().decode())
