@@ -19,7 +19,7 @@ import re
 import os
 import fire
 # import pdb
-from .constants import code as ErrorCode
+from constants import code as ErrorCode
 
 LOGGING_FORMAT = '%(asctime)s [%(levelname)s]: %(message)s'
 logging.basicConfig(format = LOGGING_FORMAT, level = logging.DEBUG)
