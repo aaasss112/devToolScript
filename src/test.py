@@ -18,8 +18,19 @@ a = 2147483647
 # a = (a >> 31) #| (~((~a + 1) >> 31) + 1)
 a = 4 ^ 3 ^ 4
 
+a = 5
+b = 0
+print(a << b)
 
+
+# print((a + b >> 1))
+
+# x = -2
+# y = 4
+# a = (x & y) + ((x ^ y) >> 1)
 # print(a)
+
+# print((a & b) + ((a ^ b) >> 1))
 
 
 # a = 13
@@ -39,9 +50,7 @@ def test(a):
     tmp = a >> 31
     return (a ^ tmp) - tmp
 
-
 # print(test(-11))
 # print(2 ^ 1)
-print(64<<3)
 # print(~-10)
 # print(-10 ^ -1 - (-1))

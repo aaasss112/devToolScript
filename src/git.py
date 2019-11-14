@@ -22,15 +22,21 @@ def _delete_local_unused_branch(branch_name = None):
         return
     dirs_arr = CommonUtil.get_dirs(Constants.YY_ROOT_DIR, Constants.EXCLUDE_DIR)
     print(dirs_arr)
+    print()
+    err_output = open(os.devnull, 'w')  # 隐藏错误输出
     for d in dirs_arr:
         result = os.path.join(Constants.YY_ROOT_DIR, d)
         os.chdir(result)
         try:
-            print("%s: " % d)
-            subprocess.run('git branch | grep -E -i %s | xargs git branch -d' % branch_name, shell = True)
-            print()
+            result = subprocess.check_output('git branch | grep -E -i %s | xargs git branch -d' % branch_name,
+                                             shell = True,
+                                             stderr = err_output).decode()
+            if result:
+                print("%s: " % d)
+                print(result, end = '')
+                print()
         except:
-            print()
+            print(end = '')
 
 
 if __name__ == '__main__':
