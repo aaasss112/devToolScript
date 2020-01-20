@@ -14,7 +14,7 @@ from util import CommonUtil
 
 def _delete_local_unused_branch(branch_name = None):
     """
-    删除本地无用分支
+    批量删除本地无用分支
     :param branch_name: 需要删除的branch，支持正则表达式
     """
     if not branch_name:
@@ -41,7 +41,7 @@ def _delete_local_unused_branch(branch_name = None):
 
 def _checkout_branch(branch_name = None):
     """
-    检出指定分支，支持正则表达式
+    批量检出指定分支，支持正则表达式
     :param branch_name 分支名，不可为空
     """
     if not branch_name:
@@ -90,8 +90,27 @@ def _checkout_branch(branch_name = None):
             print(e, end = '')
 
 
+def _list_branch():
+    dirs_arr = CommonUtil.get_dirs(Constants.YY_ROOT_DIR, Constants.EXCLUDE_DIR)
+    print(dirs_arr)
+    print()
+    for d in dirs_arr:
+        path = os.path.join(Constants.YY_ROOT_DIR, d)
+        print(path)
+        os.chdir(path)
+        try:
+            result = subprocess.check_output('git branch', shell = True).decode()
+            if result:
+                print("%s: " % d)
+                print(result, end = '')
+                print()
+        except Exception as e:
+            print(e, end = '')
+
+
 if __name__ == '__main__':
     fire.Fire({
         "del": _delete_local_unused_branch,
-        "co" : _checkout_branch
+        "co" : _checkout_branch,
+        "br" : _list_branch
     })
