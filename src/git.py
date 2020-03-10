@@ -112,10 +112,28 @@ def _list_branch():
         except Exception as e:
             print(e, end = '')
 
+def _pull():
+    dirs_arr = CommonUtil.get_dirs(Constants.YY_ROOT_DIR, Constants.EXCLUDE_DIR)
+    print(dirs_arr)
+    print()
+    for d in dirs_arr:
+        path = os.path.join(Constants.YY_ROOT_DIR, d)
+        print(path)
+        os.chdir(path)
+        try:
+            result = subprocess.check_output('git fetch', shell = True).decode()
+            if result:
+                print("%s: " % d)
+                print(result, end = '')
+                print()
+        except Exception as e:
+            print(e, end = '')
+
 
 if __name__ == '__main__':
     fire.Fire({
         "del": _delete_local_unused_branch,
         "co" : _checkout_branch,
-        "br" : _list_branch
+        "br" : _list_branch,
+        "fe" : _pull
     })
