@@ -18,7 +18,7 @@ def _delete_local_unused_branch(branch_name = None):
     :param branch_name: 需要删除的branch，支持正则表达式
     """
     if not branch_name:
-        print("Error: 请指定要删除的branchName，支持正则，例如：python3 git.py del '7.22\|earning'")
+        print("Error: 请指定要删除的branchName，支持正则，例如：python3 git.py del '7.22|earning|feature'")
         return
     dirs_arr = CommonUtil.get_dirs(Constants.YY_ROOT_DIR, Constants.EXCLUDE_DIR)
     print(dirs_arr)
@@ -28,15 +28,20 @@ def _delete_local_unused_branch(branch_name = None):
         result = os.path.join(Constants.YY_ROOT_DIR, d)
         os.chdir(result)
         try:
-            result = subprocess.check_output('git branch | grep -E -i %s | xargs git branch -d' % branch_name,
-                                             shell = True,
-                                             stderr = err_output).decode()
-            if result:
+            # result = subprocess.check_output("git branch | grep -E -i '%s' | xargs git branch -D" % branch_name,
+            #                                  shell = True,
+            #                                  stderr = err_output).decode()
+            result = subprocess.Popen("git branch | grep -E -i '%s' | xargs git branch -D" % branch_name, 
+                                shell = True, stdout = subprocess.PIPE, stderr = err_output)
+            out = result.communicate()[0].decode("utf-8") 
+
+            if result.returncode == 0 and out:
                 print("%s: " % d)
-                print(result, end = '')
+                print(out, end = '')
                 print()
-        except:
-            print(end = '')
+        except Exception as e:
+            print("del exception = %s" % e, end = '')
+            print()
 
 
 def _checkout_branch(branch_name = None):
