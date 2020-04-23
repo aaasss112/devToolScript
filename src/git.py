@@ -33,12 +33,15 @@ def _delete_local_unused_branch(branch_name = None):
             #                                  stderr = err_output).decode()
             result = subprocess.Popen("git branch | grep -E -i '%s' | xargs git branch -D" % branch_name, 
                                 shell = True, stdout = subprocess.PIPE, stderr = err_output)
-            out = result.communicate()[0].decode("utf-8") 
-
-            if result.returncode == 0 and out:
-                print("%s: " % d)
-                print(out, end = '')
-                print()
+            # out = result.communicate()[0].decode("utf-8") 
+            # if result.returncode == 0:
+            print("%s: " % d)
+            while result.poll() is None:
+                line = result.stdout.readline().strip().decode("utf-8")
+                if line:
+                    print(line, end = '')
+                    print()
+            print()
         except Exception as e:
             print("del exception = %s" % e, end = '')
             print()
