@@ -12,7 +12,7 @@ from constants import Constants
 from util import CommonUtil
 
 
-def _delete_local_unused_branch(branch_name = None):
+def _delete_local_unused_branch(branch_name=None):
     """
     批量删除本地无用分支
     :param branch_name: 需要删除的branch，支持正则表达式
@@ -28,26 +28,21 @@ def _delete_local_unused_branch(branch_name = None):
         result = os.path.join(Constants.YY_ROOT_DIR, d)
         os.chdir(result)
         try:
-            # result = subprocess.check_output("git branch | grep -E -i '%s' | xargs git branch -D" % branch_name,
-            #                                  shell = True,
-            #                                  stderr = err_output).decode()
-            result = subprocess.Popen("git branch | grep -E -i '%s' | xargs git branch -D" % branch_name, 
-                                shell = True, stdout = subprocess.PIPE, stderr = err_output)
-            # out = result.communicate()[0].decode("utf-8") 
-            # if result.returncode == 0:
+            result = subprocess.Popen("git branch | grep -E -i '%s' | xargs git branch -D" % branch_name,
+                                      shell=True, stdout=subprocess.PIPE, stderr=err_output)
             print("%s: " % d)
             while result.poll() is None:
                 line = result.stdout.readline().strip().decode("utf-8")
                 if line:
-                    print(line, end = '')
+                    print(line, end='')
                     print()
             print()
         except Exception as e:
-            print("del exception = %s" % e, end = '')
+            print("del exception = %s" % e, end='')
             print()
 
 
-def _checkout_branch(branch_name = None):
+def _checkout_branch(branch_name=None):
     """
     批量检出指定分支，支持正则表达式
     :param branch_name 分支名，不可为空
@@ -64,11 +59,11 @@ def _checkout_branch(branch_name = None):
             print("%s: " % d)
             # 先检查本地分支
             try:
-                local_branch = subprocess.check_output('git branch | grep %s' % branch_name, shell = True).decode()
+                local_branch = subprocess.check_output('git branch | grep %s' % branch_name, shell=True).decode()
                 local_branch_arr = list(filter(None, local_branch.split("\n")))  # type: list
                 if len(local_branch_arr) == 1:
                     if '*' not in local_branch_arr[0]:
-                        subprocess.call('git checkout %s' % local_branch_arr[0], shell = True)  # 检出匹配到的本地分支
+                        subprocess.call('git checkout %s' % local_branch_arr[0], shell=True)  # 检出匹配到的本地分支
                     else:
                         print("当前分支 %s 已经是目标分支，无需切换" % local_branch_arr[0])
                     continue
@@ -80,13 +75,13 @@ def _checkout_branch(branch_name = None):
                 subprocess.check_output(['git', 'fetch'])
                 try:
                     remote_branch = subprocess.check_output('git branch -r | grep %s' % branch_name,
-                                                            shell = True).decode()
+                                                            shell=True).decode()
                     remote_branch_arr = list(filter(None, remote_branch.split("\n")))  # type: list
                     if len(remote_branch_arr) == 1:
                         first_remote_branch = remote_branch_arr[0]
                         format_remote_branch = first_remote_branch.split("/")[-1]
                         subprocess.call('git checkout -b %s %s' % (format_remote_branch, first_remote_branch),
-                                        shell = True)  # 检出匹配到的远程分支
+                                        shell=True)  # 检出匹配到的远程分支
                         continue
                     elif len(remote_branch_arr) > 1:
                         print("匹配到多个远程分支，请细化正则表达式后重试")
@@ -95,7 +90,7 @@ def _checkout_branch(branch_name = None):
                     print("未匹配到任何分支，请检查正则表达式是否正确")
 
         except Exception as e:
-            print(e, end = '')
+            print(e, end='')
 
 
 def _list_branch():
@@ -107,13 +102,14 @@ def _list_branch():
         print(path)
         os.chdir(path)
         try:
-            result = subprocess.check_output('git branch', shell = True).decode()
+            result = subprocess.check_output('git branch', shell=True).decode()
             if result:
                 print("%s: " % d)
-                print(result, end = '')
+                print(result, end='')
                 print()
         except Exception as e:
-            print(e, end = '')
+            print(e, end='')
+
 
 def _pull():
     dirs_arr = CommonUtil.get_dirs(Constants.YY_ROOT_DIR, Constants.EXCLUDE_DIR)
@@ -124,19 +120,19 @@ def _pull():
         print(path)
         os.chdir(path)
         try:
-            result = subprocess.check_output('git fetch', shell = True).decode()
+            result = subprocess.check_output('git fetch', shell=True).decode()
             if result:
                 print("%s: " % d)
-                print(result, end = '')
+                print(result, end='')
                 print()
         except Exception as e:
-            print(e, end = '')
+            print(e, end='')
 
 
 if __name__ == '__main__':
     fire.Fire({
         "del": _delete_local_unused_branch,
-        "co" : _checkout_branch,
-        "br" : _list_branch,
-        "fe" : _pull
+        "co": _checkout_branch,
+        "br": _list_branch,
+        "fe": _pull
     })
