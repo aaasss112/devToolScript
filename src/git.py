@@ -50,8 +50,8 @@ def _checkout_branch(branch_name=None):
     if not branch_name:
         print("请输入要切换的分支名称，支持正则")
         return
-    # dirs_arr = CommonUtil.get_dirs(Constants.YY_ROOT_DIR, Constants.EXCLUDE_DIR)
-    dirs_arr = ['pluginlivebasemedia', 'ycloud', 'entmobile', 'entlive', 'livebasebiz']
+    dirs_arr = CommonUtil.get_dirs(Constants.YY_ROOT_DIR, Constants.EXCLUDE_DIR)
+    # dirs_arr = ['pluginlivebasemedia', 'ycloud', 'entmobile', 'entlive', 'livebasebiz']
     for d in dirs_arr:
         result = os.path.join(Constants.YY_ROOT_DIR, d)
         os.chdir(result)
