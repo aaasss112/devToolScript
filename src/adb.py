@@ -20,13 +20,14 @@ import os
 import fire
 # import pdb
 from constants import code as ErrorCode
+import datetime
 
 LOGGING_FORMAT = '%(asctime)s [%(levelname)s]: %(message)s'
-logging.basicConfig(format = LOGGING_FORMAT, level = logging.DEBUG)
+logging.basicConfig(format=LOGGING_FORMAT, level=logging.DEBUG)
 
 
 class NoDevicesConnectionException(Exception):
-    def __init__(self, output = '当前没有已连接的设备，请确保设备连接后重试'):
+    def __init__(self, output='当前没有已连接的设备，请确保设备连接后重试'):
         self.output = output
 
     def __str__(self):
@@ -60,16 +61,16 @@ def _multi_install(apk):
         devices = _get_connection_devices()
         for device in devices:
             logging.info(
-                    "installing apk: %s into device: %s ..." % (apk, device))
+                "installing apk: %s into device: %s ..." % (apk, device))
             try:
                 subprocess.check_output(
-                        ['adb', '-s', device, 'install', '-r', '-d', apk])
+                    ['adb', '-s', device, 'install', '-r', '-d', apk])
                 logging.info(
-                        "install success... apk : %s, device = %s" % (apk, device))
+                    "install success... apk : %s, device = %s" % (apk, device))
             except:
                 print
                 logging.error(
-                        "install failure... apk : %s, device = %s \n" % (apk, device))
+                    "install failure... apk : %s, device = %s \n" % (apk, device))
                 continue
         return ErrorCode.CODE_EXEC_SUCCESS
     except NoDevicesConnectionException as e:
@@ -80,7 +81,7 @@ def _multi_install(apk):
         return ErrorCode.CODE_EXEC_FAILURE
 
 
-def _path(pkg_name, pull = None):
+def _path(pkg_name, pull=None):
     """Print the installation path of the specified package name, and pull to specified path.
 
     python adb.py path "com.duowan.mobile"
@@ -95,7 +96,7 @@ def _path(pkg_name, pull = None):
             return ErrorCode.CODE_EXEC_FAILURE
         logging.info("The package name: %s" % pkg_name)
         pkg_path = subprocess.check_output(
-                ['adb', 'shell', 'pm', 'path', pkg_name]).decode()
+            ['adb', 'shell', 'pm', 'path', pkg_name]).decode()
         print(pkg_path)
         if isinstance(pull, str):
             try:
@@ -103,7 +104,7 @@ def _path(pkg_name, pull = None):
                 if path_reg and path_reg[0]:
                     logging.info("Being pull to : %s" % pull)
                     subprocess.check_output(
-                            ['adb', 'pull', path_reg[0], pull])
+                        ['adb', 'pull', path_reg[0], pull])
                     os.rename(os.path.join(pull, "base.apk"),
                               os.path.join(pull, "%s.apk" % pkg_name))
                     print("\npull to %s success, the apk name is %s.apk" % (
@@ -139,15 +140,47 @@ def _screen_shot(path):
             logging.info('start %s screen shot...' % device)
             _screen_shot_name = '/sdcard/screen-shot-%s.png' % device
             subprocess.check_call(
-                    ['adb', '-s', device, 'shell', 'screencap', '-p', _screen_shot_name])
+                ['adb', '-s', device, 'shell', 'screencap', '-p', _screen_shot_name])
             subprocess.check_output(
-                    ['adb', '-s', device, 'pull', _screen_shot_name, path])
+                ['adb', '-s', device, 'pull', _screen_shot_name, path])
             subprocess.check_call(
-                    ['adb', '-s', device, 'shell', 'rm', _screen_shot_name])
+                ['adb', '-s', device, 'shell', 'rm', _screen_shot_name])
             logging.info(
-                    'screen shot was successful, output path is: %s' % os.path.join(path,
-                                                                                    "screen-shot-%s.png" % device))
+                'screen shot was successful, output path is: %s' % os.path.join(path,
+                                                                                "screen-shot-%s.png" % device))
         return ErrorCode.CODE_EXEC_SUCCESS
+    except NoDevicesConnectionException as e:
+        logging.error(e)
+        return ErrorCode.CODE_NO_DEVICES_CONNECTION
+    except:
+        logging.error('screen shot has occur some error, please retry... ')
+        return ErrorCode.CODE_EXEC_FAILURE
+
+
+def _dumpHprof(pkgName=None, dumpPath=None):
+    """
+    dump Hprof文件，dump并导出完成后，会自动删除手机中的Hprof文件缓存
+
+    python3 adb.py dump com.baidu.haokan
+    :param pkgName: 要dump的apk包名
+    :param dumpPath: Hprof文件导出的路径，不填默认导出到桌面（mac）
+    """
+    if not pkgName:
+        logging.error("pkgName must not be null")
+        return ErrorCode.CODE_EXEC_FAILURE
+    if not dumpPath or len(dumpPath) == 0:
+        dumpPath = os.path.join(os.path.expanduser("~"), 'Desktop')
+    try:
+        devices = _get_connection_devices()
+        if len(devices) > 1:
+            logging.error('暂不支持多台已连接设备')
+            return ErrorCode.CODE_EXEC_FAILURE
+        hprofCachePath = "/data/local/tmp/%s.hprof" % datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+        print('Waiting for [%s] dump to finish... ' % hprofCachePath)
+        subprocess.check_output("adb shell am dumpheap %s %s" % (pkgName, hprofCachePath), shell=True)
+        subprocess.check_output("adb pull %s %s" % (hprofCachePath, dumpPath), shell=True)
+        subprocess.check_output("adb shell rm -rf %s " % hprofCachePath, shell=True)
+        print('dump success, hprofCachePath: %s' % dumpPath)
     except NoDevicesConnectionException as e:
         logging.error(e)
         return ErrorCode.CODE_NO_DEVICES_CONNECTION
@@ -158,7 +191,8 @@ def _screen_shot(path):
 
 if __name__ == "__main__":
     fire.Fire({
-        "install"  : _multi_install,
-        "path"     : _path,
-        'screencap': _screen_shot
+        "install": _multi_install,
+        "path": _path,
+        'screencap': _screen_shot,
+        'dump': _dumpHprof
     })
