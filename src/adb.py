@@ -21,6 +21,8 @@ import fire
 # import pdb
 from constants import code as ErrorCode
 import datetime
+from util import CommonUtil
+from ThreadInfo import ThreadInfo
 
 LOGGING_FORMAT = '%(asctime)s [%(levelname)s]: %(message)s'
 logging.basicConfig(format=LOGGING_FORMAT, level=logging.DEBUG)
@@ -189,10 +191,62 @@ def _dumpHprof(pkgName=None, dumpPath=None):
         return ErrorCode.CODE_EXEC_FAILURE
 
 
+def _formatOriginThreadInfoList(originThreadInfoList):
+    if not originThreadInfoList:
+        return
+    infoMap = {}
+    for index, item in enumerate(originThreadInfoList):
+        temp = item.strip()
+        if CommonUtil.isEmpty(temp) or index == 0:
+            continue
+        value = infoMap.get(temp)
+        if not value:
+            infoMap[temp] = ThreadInfo(temp, 1)
+        else:
+            value.plusCount()
+    return infoMap
+
+
+def _formatPrintThread(threadList):
+    print("Count    ThreadName")
+    for item in threadList:
+        print("%s         %s" % (item[1].count, item[1].name))
+
+
+def _filterThreadMap(map, limit):
+    infoMap = {}
+    for key, value in map.items():
+        if value.count >= limit:
+            infoMap[key] = value
+    sortedMap = sorted(infoMap.items(), key=lambda item: item[1].count, reverse=True)
+    return sortedMap
+
+
+def _threadInfo(pkgName=None, limit=5):
+    pid = CommonUtil.getPidByPkgName(pkgName)
+    if not pkgName:
+        logging.error("pkgName [%s] invalid" % pkgName)
+        return
+    if not pid:
+        logging.error("can not get pid from pkg [%s], please check pkgName first" % pkgName)
+        return
+    threadInfo = subprocess.check_output("adb shell ps -T -o CMD -p %s" % pid, shell=True).decode()
+    originThreadInfoList = re.split('\n', threadInfo)
+    print("pkgName = %s, pid = %s, TotalThreadCount = %s" % (pkgName, pid, len(originThreadInfoList) - 2))
+    if limit == 0:
+        print("=========所有线程及对应数量如下=====================")
+    else:
+        print("=========线程数大于%s的线程如下=====================" % limit)
+    threadMap = _formatOriginThreadInfoList(originThreadInfoList)
+    sorteList = _filterThreadMap(threadMap, limit)
+    _formatPrintThread(sorteList)
+
+
 if __name__ == "__main__":
     fire.Fire({
         "install": _multi_install,
         "path": _path,
-        'screencap': _screen_shot,
-        'dump': _dumpHprof
+        'cap': _screen_shot,
+        'dump': _dumpHprof,
+        'thread': _threadInfo
     })

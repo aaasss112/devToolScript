@@ -1,8 +1,15 @@
 import subprocess
 import os
+import re
 
 
-def get_dirs(root_dir, exclude_dir = None):
+def isEmpty(str):
+    if str is None or len(str) == 0:
+        return True
+    return False
+
+
+def get_dirs(root_dir, exclude_dir=None):
     """
     获取指定dir下的所有子目录，并且根据exclude_dir排除子目录
     :param root_dir: 指定的根目录
@@ -21,3 +28,15 @@ def get_dirs(root_dir, exclude_dir = None):
         if d in dirs_arr:
             dirs_arr.remove(d)  # 排除一些文件夹
     return dirs_arr
+
+
+def getPidByPkgName(pkgName):
+    if isEmpty(pkgName):
+        return None
+    tempInfo = subprocess.check_output("adb shell ps -o PID,NAME | grep -E '%s$'" % pkgName, shell=True).decode()
+    if isEmpty(tempInfo):
+        return None
+    pids = re.findall("(\\d+).*", tempInfo)
+    if not pids:
+        return None
+    return int(pids[0])
