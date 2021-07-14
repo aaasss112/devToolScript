@@ -3,3 +3,6 @@ screen-shot*.png
 python.test.apk
 .vscode/
 .idea/
+build/
+*.spec
+**/.DS_Store
