@@ -70,7 +70,6 @@ def _multi_install(apk):
                 logging.info(
                     "install success... apk : %s, device = %s" % (apk, device))
             except:
-                print
                 logging.error(
                     "install failure... apk : %s, device = %s \n" % (apk, device))
                 continue
@@ -223,10 +222,15 @@ def _filterThreadMap(map, limit):
 
 
 def _threadInfo(pkgName=None, limit=5):
-    pid = CommonUtil.getPidByPkgName(pkgName)
+    """
+    dump thread 信息
+    :param pkgName: app包名
+    :param limit: 线程数超过指定的数量才进行统计，默认线程数超过5条的线程才统计
+    """
     if not pkgName:
         logging.error("pkgName [%s] invalid" % pkgName)
         return
+    pid = CommonUtil.getPidByPkgName(pkgName)
     if not pid:
         logging.error("can not get pid from pkg [%s], please check pkgName first" % pkgName)
         return
@@ -242,11 +246,51 @@ def _threadInfo(pkgName=None, limit=5):
     _formatPrintThread(sorteList)
 
 
+def _crashDump(pkgName=None, output=None):
+    """
+    dump崩溃、ANR等相关文件
+    1. dump bugreport
+    2. dump anrtrace
+    :param pkgName: app包名
+    :param output: dump的文件输出路径
+    """
+    if not pkgName:
+        logging.error("pkgName [%s] invalid" % pkgName)
+        return
+    pid = CommonUtil.getPidByPkgName(pkgName)
+    if not pid:
+        logging.error("can not get pid from pkg [%s], please check pkgName first" % pkgName)
+        return
+    if not output:
+        output = os.path.join(os.path.expanduser("~"), 'Desktop')
+    print("crash dump start")
+    try:
+        print("dump bugreport start...")
+        subprocess.check_output("adb bugreport %s " % output, shell=True)
+        print("dump bugreport success...")
+    except:
+        print("dump bugreport fail...")
+
+    try:
+        print("try to  pull ANRTrace...")
+        subprocess.check_output("adb pull /data/anr %s " % output, shell=True)
+        print("pull ANRTrace success...")
+    except:
+        print("pull ANRTrace Fail...")
+    try:
+        print("dump meminfo start...")
+        subprocess.check_output("adb shell dumpsys meminfo %s " % output, shell=True)
+        print("dump meminfo success...")
+    except:
+        print("dump meminfo fail...")
+
+
 if __name__ == "__main__":
     fire.Fire({
         "install": _multi_install,
         "path": _path,
         'cap': _screen_shot,
         'dump': _dumpHprof,
-        'thread': _threadInfo
+        'thread': _threadInfo,
+        'bug': _crashDump
     })
