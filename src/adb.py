@@ -164,29 +164,45 @@ def _dumpHprof(pkgName=None, dumpPath=None):
 
     python3 adb.py dump com.baidu.haokan
     :param pkgName: 要dump的apk包名
-    :param dumpPath: Hprof文件导出的路径，不填默认导出到桌面（mac）
+    :param dumpPath: Hprof文件导出的路径，只是文件夹路径，不是文件路径，不填默认导出到桌面（mac）
     """
     if not pkgName:
         logging.error("pkgName must not be null")
         return ErrorCode.CODE_EXEC_FAILURE
     if not dumpPath or len(dumpPath) == 0:
-        dumpPath = os.path.join(os.path.expanduser("~"), 'Desktop')
+        dumpPath = os.path.join(os.path.expanduser("~"), 'Desktop', 'hprof_dump')
+        if not os.path.exists(str(dumpPath)):
+            os.mkdir(str(dumpPath))
     try:
         devices = _get_connection_devices()
         if len(devices) > 1:
             logging.error('暂不支持多台已连接设备')
             return ErrorCode.CODE_EXEC_FAILURE
-        hprofCachePath = "/data/local/tmp/%s.hprof" % datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+        hprof_file_name_tmp = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+        hprof_file_name = hprof_file_name_tmp + ".hprof"
+        hprofCachePath = "/data/local/tmp/%s" % hprof_file_name
         print('Waiting for [%s] dump to finish... ' % hprofCachePath)
         subprocess.check_output("adb shell am dumpheap %s %s" % (pkgName, hprofCachePath), shell=True)
         subprocess.check_output("adb pull %s %s" % (hprofCachePath, dumpPath), shell=True)
         subprocess.check_output("adb shell rm -rf %s " % hprofCachePath, shell=True)
+        try:
+            # Library/Android/sdk/platform-tools/hprof-conv
+            android_platform_tools = os.path.join("Library", "Android", "sdk", "platform-tools", "hprof-conv")
+            hprof_convert_path = os.path.join(os.path.expanduser("~"), android_platform_tools)
+            print('convert hprof file...hprof_convert_path = ' + hprof_convert_path)
+            origin_file = os.path.join(dumpPath, hprof_file_name)
+            converted_file = os.path.join(dumpPath, hprof_file_name_tmp + "-converted.hprof")
+            subprocess.call("%s -z %s %s " % (hprof_convert_path, origin_file, converted_file), shell=True)
+            print('convert hprof file success, converted file = ' + converted_file)
+        except Exception as e:
+            print('convert hprof file failure')
+            pass
         print('dump success, hprofCachePath: %s' % dumpPath)
     except NoDevicesConnectionException as e:
         logging.error(e)
         return ErrorCode.CODE_NO_DEVICES_CONNECTION
     except:
-        logging.error('screen shot has occur some error, please retry... ')
+        logging.error('dumpHprof has occur some error, please retry... ')
         return ErrorCode.CODE_EXEC_FAILURE
 
 
