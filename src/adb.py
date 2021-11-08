@@ -160,7 +160,7 @@ def _screen_shot(path):
 
 def _dumpHprof(pkgName=None, dumpPath=None):
     """
-    dump Hprof文件，dump并导出完成后，会自动删除手机中的Hprof文件缓存
+    dump Hprof文件，会尝试转换hprof文件格式，dump并导出完成后，会自动删除手机中的Hprof文件缓存
 
     python3 adb.py dump com.baidu.haokan
     :param pkgName: 要dump的apk包名
@@ -239,6 +239,8 @@ def _filterThreadMap(map, limit):
 
 def _threadInfo(pkgName=None, limit=5):
     """
+    python3 adb.py thread com.baidu.haokan
+
     dump thread 信息
     :param pkgName: app包名
     :param limit: 线程数超过指定的数量才进行统计，默认线程数超过5条的线程才统计
@@ -256,7 +258,7 @@ def _threadInfo(pkgName=None, limit=5):
     if limit == 0:
         print("=========所有线程及对应数量如下=====================")
     else:
-        print("=========线程数大于%s的线程如下=====================" % limit)
+        print("=========线程数大于等于%s的线程如下=====================" % limit)
     threadMap = _formatOriginThreadInfoList(originThreadInfoList)
     sorteList = _filterThreadMap(threadMap, limit)
     _formatPrintThread(sorteList)
@@ -264,11 +266,12 @@ def _threadInfo(pkgName=None, limit=5):
 
 def _crashDump(pkgName=None, output=None):
     """
+    python3 adb.py bug com.baidu.haokan
     dump崩溃、ANR等相关文件
     1. dump bugreport
     2. dump anrtrace
     :param pkgName: app包名
-    :param output: dump的文件输出路径
+    :param output: dump的文件输出路径, 只是文件夹路径，不是文件路径，不填默认导出到桌面（mac）
     """
     if not pkgName:
         logging.error("pkgName [%s] invalid" % pkgName)
@@ -300,6 +303,20 @@ def _crashDump(pkgName=None, output=None):
     except:
         print("dump meminfo fail...")
 
+def _cpuDump(pkgName=None):
+    """
+    python3 adb.py cpu com.baidu.haokan
+
+    :param pkgName: app包名
+    """
+    if not pkgName:
+        logging.error("pkgName [%s] invalid" % pkgName)
+        return
+    pid = CommonUtil.getPidByPkgName(pkgName)
+    if not pid:
+        logging.error("can not get pid from pkg [%s], please check pkgName first" % pkgName)
+        return
+    subprocess.check_call("adb shell top -H -p %s " % pid, shell=True)    
 
 if __name__ == "__main__":
     fire.Fire({
@@ -308,5 +325,6 @@ if __name__ == "__main__":
         'cap': _screen_shot,
         'dump': _dumpHprof,
         'thread': _threadInfo,
-        'bug': _crashDump
+        'bug': _crashDump,
+        'cpu':_cpuDump
     })
