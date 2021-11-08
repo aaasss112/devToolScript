@@ -316,7 +316,7 @@ def _cpuDump(pkgName=None):
     if not pid:
         logging.error("can not get pid from pkg [%s], please check pkgName first" % pkgName)
         return
-    subprocess.check_call("adb shell top -H -p %s " % pid, shell=True)    
+    subprocess.check_call("adb shell top -H  -s 9 -p %s " % pid, shell=True)    
 
 if __name__ == "__main__":
     fire.Fire({
