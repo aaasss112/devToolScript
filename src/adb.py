@@ -303,20 +303,23 @@ def _crashDump(pkgName=None, output=None):
     except:
         print("dump meminfo fail...")
 
-def _cpuDump(pkgName=None):
+def _cpuDump(pkgName=None, count=None):
     """
-    python3 adb.py cpu com.baidu.haokan
+    python3 adb.py cpu com.baidu.haokan --count 30
 
     :param pkgName: app包名
+    :param count 一次展示多少行
     """
     if not pkgName:
         logging.error("pkgName [%s] invalid" % pkgName)
         return
+    if not count:
+        count = 30    
     pid = CommonUtil.getPidByPkgName(pkgName)
     if not pid:
         logging.error("can not get pid from pkg [%s], please check pkgName first" % pkgName)
         return
-    subprocess.check_call("adb shell top -H  -s 9 -p %s " % pid, shell=True)    
+    subprocess.check_call("adb shell top -H -s 9 -m %s -p %s " % (count, pid), shell=True)    
 
 if __name__ == "__main__":
     fire.Fire({
